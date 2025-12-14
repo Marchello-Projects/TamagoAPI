@@ -38,3 +38,26 @@ async def create_pet(
     await db.refresh(new_pet)
 
     return new_pet
+
+@router.get('/{pet_id}', response_model=PetResponse)
+async def get_pet(
+    pet_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Pet).where(
+            Pet.id == pet_id,
+            Pet.owner_id == current_user.id
+        )
+    )
+
+    pet = result.scalar_one_or_none()
+
+    if not pet:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Pet not found or not accessible'
+        )
+
+    return pet

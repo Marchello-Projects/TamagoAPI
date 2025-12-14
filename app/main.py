@@ -19,6 +19,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="TamagoAPI",
     description="Tamagotchi API - A fun API to manage virtual pets. Users can create pets, check their state (hunger, happiness, energy), and interact with them by feeding, playing, or putting them to sleep. JWT authentication secures user actions.",
+    # year.month.day.major.minor
+    version="25.12.14.1.0",
     contact={
         "name": "Marchello",
         "url": "https://github.com/Marchello-Projects",

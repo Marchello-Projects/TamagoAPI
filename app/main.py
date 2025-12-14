@@ -1,8 +1,8 @@
-import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from routes.auth import router as auth_router
+from routes.pets import router as pets_router
 from database.models import Base
 from configs.configdb import async_engine
 
@@ -24,3 +24,4 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(pets_router)

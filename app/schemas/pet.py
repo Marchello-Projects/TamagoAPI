@@ -10,12 +10,6 @@ class PetCreate(BaseModel):
         description='Name of the pet (3–50 characters)',
         example='Fluffy'
     )
-    owner_id: int = Field(
-        ..., 
-        gt=0, 
-        description='ID of the user who will own the pet (must be a positive integer)',
-        example=1
-    )
 
 class PetResponse(BaseModel):
     id: int = Field(

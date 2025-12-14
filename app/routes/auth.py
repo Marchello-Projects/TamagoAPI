@@ -79,22 +79,28 @@ async def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
+    
     get_user = await db.execute(
-        select(User).where(User.username == username)
+        select(User)
+        .options(selectinload(User.pets))
+        .where(User.username == username)
     )
+
     user = get_user.scalar_one_or_none()
     if user is None:
         raise credentials_exception
+    
     return user
 
 @router.post('/register', response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
-    user_in: UserCreate, 
+    user_create: UserCreate, 
     db: AsyncSession = Depends(get_db)
 ):
     get_user = await db.execute(
-        select(User).where(User.username == user_in.username)
+        select(User).where(User.username == user_create.username)
     )
+
     existing_user = get_user.scalar_one_or_none()
     if existing_user:
         raise HTTPException(
@@ -102,10 +108,10 @@ async def register_user(
             detail='Username already registered'
         )
     
-    hashed_pw = hash_password(user_in.password)
+    hashed_pw = hash_password(user_create.password)
 
     new_user = User(
-        username=user_in.username,
+        username=user_create.username,
         password_hash=hashed_pw
     )
 
@@ -155,5 +161,6 @@ async def read_me(current_user: User = Depends(get_current_user)):
     return {
         'id': current_user.id,
         'username': current_user.username,
-        'created_at': current_user.created_at
+        'created_at': current_user.created_at,
+        'pets': current_user.pets
     }

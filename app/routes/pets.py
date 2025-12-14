@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
-from schemas.pet import PetResponse, PetCreate, PetUpdate, PetAction
+from schemas.pet import PetResponse, PetCreate, PetUpdate, PetActionCreate, PetActionResponse
 from configs.configdb import get_db
 from routes.auth import get_current_user
-from database.models import Pet, User
+from database.models import Pet, User, PetActions, ActionType
 
 router = APIRouter(prefix='/pets', tags=['Pets & Actions'])
 
@@ -39,8 +39,21 @@ async def changing_pet_stats(pet, db, type_stats: str):
 
     pet.last_updated = datetime.now(timezone.utc)
 
+    mapping = {
+        'hunger': ActionType.FEED, 
+        'energy': ActionType.PLAY, 
+        'happiness': ActionType.SLEEP
+    }
+
+    new_action = PetActions(
+        pet_id=pet.id,
+        action_type=mapping[type_stats],
+    )
+
+    db.add(new_action)
     await db.commit()
     await db.refresh(pet)
+    await db.refresh(new_action)
 
     return pet
 
@@ -122,6 +135,7 @@ async def delete_pet(
     await db.commit()
 
     await db.execute(text("ALTER SEQUENCE pets_id_seq RESTART WITH 1"))
+    await db.execute(text("ALTER SEQUENCE pet_actions_id_seq RESTART WITH 1"))
     await db.commit()
 
     return None
@@ -129,10 +143,28 @@ async def delete_pet(
 @router.patch('/{pet_id}/action', response_model=PetResponse)
 async def action_pet(
     pet_id: int,
-    action: PetAction,
+    action: PetActionCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     pet = await get_pet_from_db(db, pet_id, current_user.id)
     check_not_pet(pet)
     return await changing_pet_stats(pet, db, action.type_stats)
+
+@router.get('/pets/{pet_id}/actions_history', response_model=list[PetActionResponse])
+async def get_actions_history(
+    pet_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    pet = await get_pet_from_db(db, pet_id, current_user.id)
+    check_not_pet(pet)
+
+    result = await db.execute(
+        select(PetActions)
+        .where(PetActions.pet_id == pet_id)
+        .order_by(PetActions.timestamp.desc())
+    )
+
+    actions = result.scalars().all()
+    return actions

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field
+from database.models import ActionType
 
 class PetCreate(BaseModel):
     name: str = Field(
@@ -62,9 +63,31 @@ class PetUpdate(BaseModel):
     class Config:
         orm_mode = True
 
-class PetAction(BaseModel):
+class PetActionCreate(BaseModel):
     type_stats: str = Field(
         ...,
         description="Type of stat to increase",
         example="hunger"  
     )
+
+class PetActionResponse(BaseModel):
+    id: int = Field(
+        ...,
+        example=1,
+        description='Action ID'
+    )
+
+    action_type: ActionType = Field(
+        ...,
+        example=ActionType.FEED,
+        description='Type of action performed with the pet'
+    )
+
+    timestamp: datetime = Field(
+        ...,
+        example='2025-12-14T15:32:10+00:00',
+        description='Time when the action was performed (UTC)'
+    )
+
+    class Config:
+        orm_mode = True

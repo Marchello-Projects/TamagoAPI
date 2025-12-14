@@ -171,20 +171,12 @@ async def delete_my_account(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    get_pets = await db.execute(
-        select(Pet).where(Pet.owner_id == current_user.id)
-    )
-
-    pets = get_pets.scalars().all()
-
-    for pet in pets:
-        await db.delete(pet)
-
     await db.delete(current_user)
     await db.commit()
 
     await db.execute(text("ALTER SEQUENCE users_id_seq RESTART WITH 1"))
     await db.execute(text("ALTER SEQUENCE pets_id_seq RESTART WITH 1"))
+    await db.execute(text("ALTER SEQUENCE pet_actions_id_seq RESTART WITH 1"))
     await db.commit()
 
     return None

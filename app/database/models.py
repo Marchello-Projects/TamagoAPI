@@ -22,7 +22,10 @@ class User(Base):
         nullable=False
     )
 
-    pets: Mapped[list['Pet']] = relationship(back_populates='owner')
+    pets: Mapped[list['Pet']] = relationship(
+        back_populates='owner',
+        cascade='all, delete-orphan'
+    )
 
 class Pet(Base):
     __tablename__ = 'pets'
@@ -40,7 +43,10 @@ class Pet(Base):
     )
 
     owner: Mapped['User'] = relationship(back_populates='pets')
-    actions: Mapped[list['PetActions']] = relationship(back_populates='pet')
+    actions: Mapped[list['PetActions']] = relationship(
+        back_populates='pet',
+        cascade='all, delete-orphan'
+    )
 
 class PetActions(Base):
     __tablename__ = 'pet_actions'

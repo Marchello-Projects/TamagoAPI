@@ -27,6 +27,7 @@ app = FastAPI(
         "url": "https://github.com/Marchello-Projects",
         "email": "paskalovmarkus@gmail.com",
     },
+    lifespan=lifespan
 )
 
 app.add_middleware(PetDecayMiddleware)
